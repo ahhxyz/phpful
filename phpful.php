@@ -16,47 +16,39 @@ version_compare(PHP_VERSION,'5.3.0','>') or die('PHP版本必须不低于5.3.0�
 defined('APP_PATH') or die('You must define the application path !');
 @ini_set('magic_quotes_runtime', 0);
 
-//set_include_path(get_include_path().PATH_SEPARATOR.__DIR__.APP_P);
+//定义常量
 
 defined('PHPFUL_PATH') or define('PHPFUL_PATH', __DIR__);
 defined('CORE_PATH')   or define('CORE_PATH',  PHPFUL_PATH.'/Core');//框架核心库路径
 defined('LIB_PATH')    or define('LIB_PATH',PHPFUL_PATH.'/Lib');//框架扩展库路径
 define('DS', DIRECTORY_SEPARATOR);
+define('ROOT',dirname(realpath($_SERVER['SCRIPT_FILENAME'])));//网站根目录
+
+//自动加载类
 spl_autoload_register('phpful\autoLoad');//这个注册是全局的；
 
-define('ROOT',dirname(realpath($_SERVER['SCRIPT_FILENAME'])));//网站根目录
-require_once(__DIR__."/Common/common.php");
-$config= Common\C();
-$modules=array_values($config["Common"]["MODULE_MAP"]);
-$config_default=array(
+//获取配置信息
+$config= Core\Config::getIns()->getAll();
+$modules=array_values($config["default"]["MODULE_MAP"]);
+
+$config['default']=array_merge(
+        array(
 	'MODULE'=>$modules,
 	'DEFAULT_INDEX'=>'index.php',
 	'DEFAULT_MOUDLE'=>'Common',
 	'RESOURCE_SEPERATOR'=>'/'
 
-	);
-$config['Common']=array_merge($config_default,$config['Common']);
-		//define("CONFIG", $config['Common']);
+	),$config['default']);
 
 
-//create files
-if(!file_exists(APP_PATH.'/Common')){
-	mkdir(APP_PATH.'/Common');
-	mkdir(APP_PATH.'/Common/Conf');
-	mkdir(APP_PATH.'/Common/Controller');
-	mkdir(APP_PATH.'/Common/Model');
-	mkdir(APP_PATH.'/Common/Lib');
-	mkdir(APP_PATH.'/Common/Runtime');
-	mkdir(APP_PATH.'/Common/Runtime/Cache');
-	mkdir(APP_PATH.'/Common/Runtime/Logs');
-	file_put_contents(APP_PATH.'/Common/Conf/Config.php','<?php return [];?>');
 
+//创建应用的文件夹
+$folders=array("controllers","models","views","config","modules","runtimes");
+foreach($folders as $folder){
+    if(!file_exists(APP_PATH.'/'.$folder)){
+	mkdir(APP_PATH.'/'.$folder);
+    }
 }
-
-
-
-
-
 
 
 /*
@@ -64,104 +56,107 @@ if(!file_exists(APP_PATH.'/Common')){
  *
  */
 
-	$resource=array();
-	$params=array();
-	$uri=$_SERVER['REQUEST_URI'];
-	//检查是否存在已经定义的路由，
-	if(($router=checkRouters($uri,$config['Common']))!=false){
-		list($module,$controller,$method,$params)=$router;
-		$controller=str_ireplace("Controller", "", $controller);
-		$params=explode($config['Common']['RESOURCE_SEPERATOR'], substr($params,1));
-	}else{
-		if($uri=='/'){//如果是根目录，则调用 Application\Common\Controller\IndexController这个控制器
-				$module=$config['Common']['DEFAULT_MOUDLE'];
-				$controller='Index';
-		}else{
-			$params=$url=false===strpos($uri,'/'.$config['Common']['DEFAULT_INDEX'])?substr($uri,1):substr($uri,11); //规则是：/模块名/模型名/字段1的索引/字段1的值/字段2的索引/字段2的值
-
-	        
-	        /*
-			 *获取URL关键字：$key
-	         */
-	        $key=$url;
-			if(($position=strpos($url,"&"))!=false){
-				$key=substr($url, 0,$position);
-				$key=rtrim($key,$config['Common']['RESOURCE_SEPERATOR']);
-			}
-
-			$keys=explode($config['Common']['RESOURCE_SEPERATOR'],$key);
-			
-
-			/*
-			 *根据关键字来获取模块名和控制器名
-			 */	
-			if(!isModule($config,$keys[0])){//不含模块名的URL关键字，这个关键字就表示控制器名
-				
-				$module="Common";
-				$controller=$keys[0];
-				foreach ($config["Common"]["MODULE"] as  $val) {
-					
-					if(in_array($keys[0],$config[$val]["CONTROLLER_MAP"])){
-						$module=$val;
-						break;
-					}
-				}
-				$controller=getRealController($config,$module,$keys[0]);
-				
-			}else{
-				//$keys[0]、$keys[1]分别表示keys中的模块部分和控制器部分,必须始终保证这一点
-				$module=getRealModule($config,$keys[0]);
-				if(!isset($keys[1])){
-					$controller="Index";
-				}else{
-
-					$controller=getRealController($config,$module,$keys[1]);
-				}
-			
-			}
+$resource=array();
+$query=array();
+$uri=$_SERVER['REQUEST_URI'];
+//检查是否存在已经定义的路由，
+if(($router=checkRouters($uri,$config['default']))!=false){
+    list($module,$controller,$method,$query)=$router;
+    $controller=str_ireplace("Controller", "", $controller);
+    $query=explode($config['default']['RESOURCE_SEPERATOR'], substr($query,1));
+}else{
+    if($uri=='/'){//如果是根目录，则调用 App\controllers\IndexController这个控制器
+        $module=$config['default']['DEFAULT_MOUDLE'];
+        $controller='Index';
+    }else{
+        
+        $query=$url=false===strpos($uri,'/'.$config['default']['DEFAULT_INDEX'])?substr($uri,1):substr($uri,11); //规则是：/模块名/模型名/字段1的索引/字段1的值/字段2的索引/字段2的值
 
 
-			//var_dump($module,$controller);
+        //获取URL关键字：$key
+        $key=$url;
+
+        if(($position=strpos($url,"&"))!=false){
+            $key=substr($url, 0,$position);
+            $key=rtrim($key,$config['default']['RESOURCE_SEPERATOR']);
+        }
+
+        $keys=explode($config['default']['RESOURCE_SEPERATOR'],$key);
 
 
-		}
-	
-		$method=ucfirst($_SERVER['REQUEST_METHOD']);//访问页面使用的请求方法
+        /*
+         *根据关键字来获取模块名和控制器名
+         */	
+        if(!isModule($config,$keys[0])){//不含模块名的URL关键字，这个关键字就表示控制器名
 
-	}
+            $module="Common";
+            $controller=$keys[0];
+            foreach ($config["default"]["MODULE"] as  $val) {
+
+                    if(in_array($keys[0],$config[$val]["CONTROLLER_MAP"])){
+                            $module=$val;
+                            break;
+                    }
+            }
+            $controller=getRealController($config,$module,$keys[0]);
+
+        }else{
+            //$keys[0]、$keys[1]分别表示keys中的模块部分和控制器部分,必须始终保证这一点
+            $module=getRealModule($config,$keys[0]);
+            if(!isset($keys[1])){
+                    $controller="Index";
+            }else{
+
+                    $controller=getRealController($config,$module,$keys[1]);
+            }
+
+        }
 
 
-	//不管上面如何处理，只要最终返回真实的模块名、控制器名、方法名即可，分别是$module、$controller、$method
+            //var_dump($module,$controller);
 
-    define('MODULE',$module);//真实的模块名
-    define('CONTROLLER',$controller);//真实的控制器名称和模型名称
-    define('METHOD',$method);
-	$classname=APP_NAME.'\\'.$module.'\Controller\\'.$controller.'Controller';
 
-	if(class_exists($classname)){
-		
-		$ref=new \ReflectionClass($classname);
-		$controller=$ref->newInstance();
+    }
 
-	    if(method_exists($classname,"Before".$method)) {
-	        call_user_func(array($classname,"Before".$method)); 
-	    }
-		
-	    $controller->$method($params); //执行对应的控制器方法
+    $method=ucfirst($_SERVER['REQUEST_METHOD']);//访问页面使用的请求方法
 
-	    if(method_exists($classname,"After".$method)) {
-	        call_user_func(array($classname,"After".$method)); 	    	
-	    }
-	    
-	}else{
-    	die('<div><h1  style="color:#f00" >404</h1></div>');
-    	//Class '.$classname.' is Not found !
-	}
+}
+
+
+//不管上面如何处理，只要最终返回真实的模块名、控制器名、方法名即可，分别是$module、$controller、$method
+
+define('MODULE',$module);//真实的模块名
+define('CONTROLLER',$controller);//真实的控制器名称和模型名称
+define('METHOD',$method);
+$classname=APP_NAME.'\\'.$module.'\controllers\\'.$controller.'Controller';
+
+
+//调用对应控制器的方法
+if(class_exists($classname)){
+
+        $ref=new \ReflectionClass($classname);
+        $controller=$ref->newInstance();
+    //前置的拦截器方法    
+    if(method_exists($classname,"Before".$method)) {
+        call_user_func(array($classname,"Before".$method)); 
+    }
+
+    $controller->$method($query); //执行对应的控制器方法
+    
+    //后置的拦截器方法
+    if(method_exists($classname,"After".$method)) {
+        call_user_func(array($classname,"After".$method)); 	    	
+    }
+
+}else{
+    exit('<div><h1  style="color:#f00" >404</h1></div>');
+    //Class '.$classname.' is Not found !
+}
 
 /*
  *自动加载类的函数
  */
-function autoLoad($classname) {  //参数$classname就是要调用但尚不存在的类名
+function autoLoad($classname) {  //参数$classname就是要调用但可能尚未加载的类名
     $cname=str_replace('\\', '/', $classname);
     $classpath=dirname(__DIR__).'/'.$cname.'.class.php';
     $filepath=dirname(__DIR__).'/'.$cname.'.php';
@@ -173,55 +168,61 @@ function autoLoad($classname) {  //参数$classname就是要调用但尚不存�
 
     //require_once(realpath(APP_PATH).'/'.$name . '.class.php');//This is wrong ,why?
 }
-function U($s){
-	return $config['Common']['DEFAULT_INDEX'].$s;
-}
+
 function checkRouters($uri,$conf){
-	if(isset($conf['ROUTERS'])){
-		foreach ($conf['ROUTERS'] as $mode => $action) {
-			$pattern="/".str_replace("/", "\/", $mode)."/";
-			if(preg_match($pattern, $uri)){
-				$params=preg_replace($pattern, "", $uri);
-				$action=str_replace(APP_NAME."\\","", $action);
-				list($module,$nil,$controller,$method)=explode("\\",$action);
-				
-				return array($module,$controller,$method,$params);
-			}
-		}
-	}
-	return false;
+    if(isset($conf['ROUTERS'])){
+            foreach ($conf['ROUTERS'] as $mode => $action) {
+                    $pattern="/".str_replace("/", "\/", $mode)."/";
+                    if(preg_match($pattern, $uri)){
+                            $query=preg_replace($pattern, "", $uri);
+                            $action=str_replace(APP_NAME."\\","", $action);
+                            list($module,$nil,$controller,$method)=explode("\\",$action);
+
+                            return array($module,$controller,$method,$query);
+                    }
+            }
+    }
+    return false;
 
 }
 
 function isModule($config,$arg){
 
-	if(array_key_exists($arg, $config["Common"]["MODULE"])||in_array($arg,$config["Common"]["MODULE"])){
-		return true;
-	}
+    if(array_key_exists($arg, $config["default"]["MODULE"])||in_array($arg,$config["default"]["MODULE"])){
+            return true;
+    }
 
-	return false;
+    return false;
 }
 
+
+//根据模块映射中定义的模块名来获取真实的模块名
 function getRealModule($config,$module){
-	if (isset($config['Common']['MODULE_MAP'])) {
+    if (isset($config['default']['MODULE_MAP'])) {
 
-		if(array_key_exists($module,$config['Common']['MODULE'])){
-			$module=$config['Common']['MODULE_MAP'][$module];
+            if(array_key_exists($module,$config['default']['MODULE'])){
+                    $module=$config['default']['MODULE_MAP'][$module];
 
-		}
-	}			
-	return $module;
+            }
+    }			
+    return $module;
 }
+
+//根据模块映射中定义的控制器名来获取真实的控制器名
 function getRealController($config,$module,$controller){
-	if (isset($config[$module]['CONTROLLER_MAP'])) {
-		if (array_key_exists($controller,$config[$module]['CONTROLLER_MAP'])){
+    if (isset($config[$module]['CONTROLLER_MAP'])) {
+            if (array_key_exists($controller,$config[$module]['CONTROLLER_MAP'])){
 
-			$controller=$config[$module]['CONTROLLER_MAP'][$controller];//真实的模型名，对应着控制器
+                    $controller=$config[$module]['CONTROLLER_MAP'][$controller];//真实的模型名，对应着控制器
 
-		}
-	}	
-	return $controller;
+            }
+    }	
+    return $controller;
 }
 
+
+function U($s){
+    return $config['default']['DEFAULT_INDEX'].$s;
+}
 
 ?>
