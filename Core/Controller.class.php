@@ -5,9 +5,13 @@ class Controller{
 	private $args;
 	private $file;
 	private $_vars;
+        public $query;//URI中的参数
 	public function __construct($file=''){
 		$this->file=$file;
+                
+                if(method_exists($this, "init")){
 		$this->init();//子类中定义的控制器公共方法
+                }
 	}
 
 
