@@ -1,6 +1,6 @@
 <?php
 namespace phpful;
-use phpful\Core\Config;
+use phpful\core\Config;
 
 /*
  *@框架入口文件
@@ -26,7 +26,7 @@ define('APP_NAME',basename(APP_PATH));
 //定义常量
 
 //defined('PHPFUL_PATH') or define('PHPFUL_PATH', __DIR__);
-//defined('CORE_PATH')   or define('CORE_PATH',  PHPFUL_PATH.'/Core');//框架核心库路径
+//defined('CORE_PATH')   or define('CORE_PATH',  PHPFUL_PATH.'/core');//框架核心库路径
 //defined('LIB_PATH')    or define('LIB_PATH',PHPFUL_PATH.'/Lib');//框架扩展库路径
 define('DS', DIRECTORY_SEPARATOR);
 define('ROOT',$_SERVER['DOCUMENT_ROOT']);//网站根目录

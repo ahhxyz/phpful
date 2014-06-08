@@ -1,5 +1,5 @@
 <?php
-namespace phpful\Core;
+namespace phpful\core;
 class Controller{
 	public $model;
 	private $args;

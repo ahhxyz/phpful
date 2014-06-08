@@ -1,7 +1,7 @@
 <?php
 namespace phpful\Common;
 function C (){
-	$c= \phpful\Core\Config::getIns();
+	$c= \phpful\core\Config::getIns();
 	return  $c->getAll();
 }
 ?>

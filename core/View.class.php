@@ -1,5 +1,5 @@
 <?php
-namespace phpful\Core;
+namespace phpful\core;
 
 class View {
 	//private $tpl_file;

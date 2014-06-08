@@ -1,5 +1,5 @@
 <?php
-namespace phpful\Core;
+namespace phpful\core;
 /*
  *
  *
@@ -16,6 +16,11 @@ class Config {
             
         }
     }
+    
+    
+    
+    private function __clone(){}
+    
     /*
      *获取config类的单例
      */
