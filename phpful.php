@@ -56,25 +56,30 @@ foreach($folders as $folder){
 
 //检查是否存在已经定义的路由，
 if(($router=checkRouters($config))!=false){
-    list($module,$controller,$method,$query)=$router;
-    $controller=str_ireplace("Controller", "", $controller);
-    $query=explode($config['RESOURCE_SEPERATOR'], substr($query,1));
+  list($module,$controller,$query)=$router;
+    
 }else{
-    //获取完整的类名
-
-    $classname=parseURI($config);
-    
-    
-    $method=ucfirst($_SERVER['REQUEST_METHOD']);//访问页面使用的请求方法
+  list($module,$controller,$query)=parseURI($config,URI);
     
 }
 
 
+if(isset($module)){
+    $classname=APP_NAME."\modules\\".$module."\controllers\\".$controller."Controller";
+}else{
+    $classname=APP_NAME."\controllers\\".$controller."Controller";
+}
+
+
+$method=ucfirst($_SERVER['REQUEST_METHOD']);//访问页面使用的请求方法
+    
+
+
 //不管上面如何处理，只要最终返回真实的模块名、控制器名、方法名即可，分别是$module、$controller、$method
 
-!isset($module) or define('MODULE',  $module);//真实的模块名
-//define('CONTROLLER',$controller);//真实的控制器名称和模型名称
-//define('METHOD',$method);
+define('MODULE',  $module);//真实的模块名(如果存在)
+define('CONTROLLER',$controller);//真实的控制器名称和模型名称
+define('METHOD',$method);
 
 
 
@@ -125,16 +130,13 @@ function autoLoad($classname) {  //参数$classname就是要调用但可能尚�
 function checkRouters($conf){
     
     if(isset($conf['ROUTERS'])){
-            foreach ($conf['ROUTERS'] as $mode => $action) {
-                    $pattern="/".str_replace("/", "\/", $mode)."/";
-                    if(preg_match($pattern, URI)){
-                            $query=preg_replace($pattern, "", URI);
-                            $action=str_replace(APP_NAME."\\","", $action);
-                            list($module,$nil,$controller,$method)=explode("\\",$action);
-
-                            return array($module,$controller,$method,$query);
-                    }
+        foreach ($conf['ROUTERS'] as $mode => $action) {
+            $pattern="/".str_replace("/", "\/", $mode)."/";
+            if(preg_match($pattern, URI)){
+                return parseURI($conf,"/".$action);
+                
             }
+        }
     }
     return false;
 
@@ -144,30 +146,25 @@ function checkRouters($conf){
 /*
  * 返回一个完整的控制器的类名
  */
-function parseURI($config){
+function parseURI($config,$URI){
    
-    if(URI=='/'){//如果是根目录，则调用 App\controllers\IndexController这个控制器
-        $module=$config['DEFAULT_MOUDLE']?$config['DEFAULT_MOUDLE']:"";
+    if($URI=='/'){//如果是根目录，则调用 App\controllers\IndexController这个控制器
+        $module=null;
         $controller='Index';
+        return array($module,$controller,null);
     }    
     
     
-    $URIs=parse_url(URI);
-    // var_dump(URI,$URIs);
+    $URIs=parse_url($URI);
+    // var_dump($URI,$$URIs);
     $path=substr($URIs['path'],1);
     @$query=$URIs['query'];
-    $controllerClassName="";
-    
-    
     
     if(empty($query)){//RESTFUL的URL:admin/app/3&user/cat/2
         
         //关联数据表
         if(($pos=strpos($path, "&"))!==false&&$config['URL_REF']){ //预留扩展
-            //$master=  substr($path, 0,$pos);
-           
-            
-            
+            //$master=  substr($path, 0,$pos);           
             
             $modelClassName=  str_replace("/models/","/controllers/",$controllerClassName);
             //$model=new $modelClassName();
@@ -175,20 +172,26 @@ function parseURI($config){
             
             return $controllerClassName;
         }else{//不关联数据表
-            $uris=  explode("/", URI);
+            $uris=  explode("/", $URI);
             
             if(in_array($uris[1],$config["MODULES"])){
-                $controllerClassName=APP_NAME."\modules\\".$uris[1]."\controllers\\".$uris[2]."Controller";
+                $module=$uris[1];
+                $controller=$uris[2];
+                $query=  array_slice($uris, 3);
+                
             
             }else{
-                $controllerClassName=APP_NAME."\controllers\\".$uris[1]."Controller";
+                $module=null;
+                $controller=$uris[1];
+                $query=  array_slice($uris, 2);
+                
                 
             }
         }
     }else{//常规的URL形式：/admin/app?id=3&r=user&cat=2
         
     }
-    return $controllerClassName;
+    return array($module,$controller,$query);
 }
 
 
