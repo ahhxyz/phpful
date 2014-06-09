@@ -24,7 +24,7 @@ class Config {
     /*
      *获取config类的单例
      */
-    public static function getIns(){
+    public static function getInstance(){
             if(self::$instance===false){
                     self::$instance=new Config();
             }

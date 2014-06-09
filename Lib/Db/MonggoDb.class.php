@@ -7,7 +7,7 @@ class Mongo extends Db{
 		
 		
 	}
-	static function getIns(){
+	static function getInstance(){
 		
 	}
 	public  function Get(){
