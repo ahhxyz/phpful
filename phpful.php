@@ -21,7 +21,6 @@ define('APP_NAME',basename(APP_PATH));
 @ini_set('magic_quotes_runtime', 0);
 
 
-//var_dump($_SERVER);
 
 //定义常量
 
@@ -63,7 +62,7 @@ if(($router=checkRouters($config))!=false){
     
 }
 
-
+//控制器完整的类名
 if(isset($module)){
     $classname=APP_NAME."\modules\\".$module."\controllers\\".$controller."Controller";
 }else{
