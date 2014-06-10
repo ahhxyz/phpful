@@ -51,8 +51,6 @@ foreach($folders as $folder){
  *
  */
 
-
-
 //检查是否存在已经定义的路由，
 if(($router=checkRouters($config))!=false){
   list($module,$controller,$query)=$router;
