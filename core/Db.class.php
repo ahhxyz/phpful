@@ -46,7 +46,7 @@ class Db{
         }
         return NULL;
     }
-    public function Get(){
+    public function select(){
 		
 	
         $statement=  $this->_pdo->prepare($sql);
@@ -69,64 +69,47 @@ class Db{
 
     }
 
+    /**
+     * 
+     * @param type $table
+     * @param type $fiels
+     * @param type $values
+     * @return 最后插入的数据行的ID
+     */
 
+    public function insert($table,$fiels,$values){
+            
 
-	public function insert($data=''){
-		$this->create();
-		
-		if(empty($data)){
-			$data=$this->_data;
-		}
-		$data=filter($data);
-		foreach($data as $key=>$val){
-			$field[]=$key;
-			$value[]='"'.$val.'"';		
-		}
+           
+        $this->_pdo->exec('INSERT INTO '.$table.' ('.$fields.')'.' VALUES('.$values.') ');
 
-		$fields=implode(',',$field);
-		$values=implode(',',$value);
-		self::$instance->exec('INSERT INTO '.$this->_table.' ('.$fields.')'.' VALUES('.$values.') ');
-
-		$_pk=self::$instance->lastInsertId();
-		//self::$instance=null;
-		return $_pk;
-
-	}
-
-
-
-
-	public function Put( $data=''){
+        return   $this->_pdo->lastInsertId();
         
 
-	    if(!isset($this->where)){
-	       echo json_encode(array('errorMsg'=>'必须设置where条件！'));
-	       return ;
-	    }
-
-        foreach($data as $key=>$val){
-		   $sets[]='  '.$key.'="'.$val.'"';		   
-		}
-		 
-		$set=implode(',',$sets);
-	
-		$res= self::$instance->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
-		//self::$instance=null;
-		return $res;
-
-	}
-	
+    }
 
 
 
 
+    public function Put( $data=''){
 
 
-	public function Delete(){
-	    $res=self::$instance->exec('DELETE FROM '.$this->_table.$this->where);
-		//self::$instance=null;
-		return $res;
-	}
+        if(!isset($this->where)){
+           echo json_encode(array('errorMsg'=>'必须设置where条件！'));
+           return ;
+        }
+
+    foreach($data as $key=>$val){
+               $sets[]='  '.$key.'="'.$val.'"';		   
+            }
+
+            $set=implode(',',$sets);
+
+            $res= self::$instance->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
+            //self::$instance=null;
+            return $res;
+
+    }
 
 
 
@@ -134,159 +117,11 @@ class Db{
 
 
 
-
-	public function where($args){
-		$this->where=' where '.$args;			
-				
-		return $this;
-		
-	}
-
-
-	public function fields($str){
-	 	$this->fields[]=$str;
-		return $this;
-	}
-
-
-
-
-
-
-
-
-public function create($data=''){
-	if($_POST['token']==$_SESSION['token']){
-		echo json_encode(array('errorMsg'=> 'Token wrong'));
-		return ;
-	}
-	if(!empty($data)){
-		$this->_data=$data;				
-
-	}else{
-		$this->data=$_POST['data'];
-	 //先检查是否是基本模型，如果是则进行字段映射;
-		if(isset($this->_map)){
-
-			//检查字段映射中的数据库字段是否正确
-			foreach($this->_map as $val){
-				if(!array_key_exists($val,$this->_fields)){
-					
-					echo json_encode(array('errorMsg'=> '字段映射错误！'));
-					return false;			
-				}
-			}
-		}
-
-		if(isset($this->_validate)){
-		//进行字段验证
-			foreach($this->_validate as $val){
-			    switch($val['1']){
-			        case 'require':
-			            if(empty($this->data[$val['0']])){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				            return false;
-				        }
-			        break;
-
-			        case 'email':			        
-				        $reg='/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/';
-				        if(!preg_match($reg,str_replace('%40','@',$this->data[$val['0']]))){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				            return false;
-					 	}			   
-			        break;
-			        
-			        case 'number':			   
-			        break;
-
-
-			        case 'unique':
-			            $column=isset($this->_map[$val['0']])?$this->_map[$val['0']]:$val['0'];
-				        $column_val=$this->data[$val['0']];//这个字段的值;
-				        $fun='getBy'.$column;
-			            if($this->$fun($column_val)){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				        }
-					        return false;
-				    break;
-
-					case 'function':
-					    $commonFile=APP_PATH.'/'.MODULE.'/'.'/Common/common.php';
-					    if (file_exists($commonFile)) {
-					    	
-					    	require_once($commonFile);
-					    	
-					    	if(!$val['1']()){
-				            	echo json_encode(array('errorMsg'=>$val['2']));
-					        	return false;
-					        }	
-					    }
-					break;
-					
-
-					case 'callback':
-						if(!$this->$val['1']()){
-				            	echo json_encode(array('errorMsg'=>$val['2']));
-					        	return false;
-						}
-
-					break;
-
-
-					case 'in':
-						if($val['1']<$condition2['0']&&$val['1']>$condition2['1']){
-						    $rlt[]=true;	
-						}else{
-					        return false;
-					        $this->valError[]=$val['2'];							
-						}
-					break;
-
-
-					case 'confirm':
-						$to=array_key_exists($val['0'],$this->data)?$this->data[$val['0']]:$val['0'];
-
-						if($to!=$this->data[$val['1']]){
-					        $rlt[]= false;
-					        $this->valError[]=$val['2'];
-						}else{
-						    $rlt[]=true;	
-						}
-					break;
-				}
-
-			}
-
-		}
-		
-		//根据字段映射创建数据;							
-		//$this->_data=isset($this->no_repeat)?$this->no_repeat():$this->data;
-		foreach($this->_data as $key=>$val){
-			if(array_key_exists($key,$this->_map)){
-				$value=$this->_data[$key];
-				$this->_data[$this->_map[$key]]=$value;
-				unset($this->_data[$key]);
-			}
-		}
-		
-		if(isset($this->_auto)){
-		//数据自动完成
-			foreach($this->_auto as $key=>$val){
-				$this->_data[$val['0']]=$val['1'];			   
-			}	
-		}
-
-	}
-
-	$this->_data=filter($this->_data);
-}
-
-
-
-
-
-
+    public function Delete(){
+        $res=self::$instance->exec('DELETE FROM '.$this->_table.$this->where);
+            //self::$instance=null;
+            return $res;
+    }
 
 
 

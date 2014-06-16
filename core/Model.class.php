@@ -82,109 +82,101 @@ class Model{
 
 
 
-	public function Get(){
-		if(isset($this->_view)){
-			$tables=array_keys($this->_view);
-		    foreach($this->_view as $model=>$fields){
-			    foreach($fields as $key=>$val){
-					if($key=='_on'){
-						$val=str_replace('=', '='.$this->_prefix, $val);
-						$_joins[]=' JOIN '.$model.' ON '.$val;		
-						//$on=$val;
-					}else{
-					    $_fields[]=' '.is_int($key)?$this->_prefix.$model.$val:$this->_prefix.$model.$key.' as '.$val;
-					}				
-			    }
-		    }
-			$_fields=implode(',',$_fields);
-			$_joins =implode(' ',$_joins);
-			$sql='SELECT '.$_fields.' '.$_joins.' '.$this->where.' '.$this->_limit;
-			
-		}elseif(isset($this->_rel)){
-					foreach($this->_rel as $key=>$val){
-						$tables[]=$key;
-						foreach($val as $field=>$value){
-							$type[$key]=$field['mapping_type'];
-							$name[$key]=$field['mapping_name'];
-							$foreign_key[$key]=$field['foreign_key'];						
-						}
-						
-					}  
+    public function select(){
+        if(isset($this->_view)){
+                $tables=array_keys($this->_view);
+            foreach($this->_view as $model=>$fields){
+                foreach($fields as $key=>$val){
+                    if($key=='_on'){
+                        $val=str_replace('=', '='.$this->_prefix, $val);
+                        $_joins[]=' JOIN '.$model.' ON '.$val;		
+                            
+                    }else{
+                        $_fields[]=' '.is_int($key)?$this->_prefix.$model.$val:$this->_prefix.$model.$key.' as '.$val;
+                    }				
+                }
+            }
+            $_fields=implode(',',$_fields);
+            $_joins =implode(' ',$_joins);
+            $sql='SELECT '.$_fields.' '.$_joins.' '.$this->where.' '.$this->_limit;
+
+        }elseif(isset($this->_rel)){
+            foreach($this->_rel as $key=>$val){
+                $tables[]=$key;
+                foreach($val as $field=>$value){
+                        $type[$key]=$field['mapping_type'];
+                        $name[$key]=$field['mapping_name'];
+                        $foreign_key[$key]=$field['foreign_key'];						
+                }
+
+            }  
 
 
-				$sql='';
-			
-		}else{
-			echo $sql='SELECT * FROM '.$this->table.' '.$this->where.' '.$this->_limit;
+            $sql='';
 
-		}
-		//echo $this->where;
-		$statement=self::$PDO->prepare($sql);
-		$statement->execute();		
-		$res=$statement->fetchAll();
-		//self::$PDO=null;
-		return $res;	
-				
-		/*
-	SELECT 
-	article.aid,article.title,
-	user.username,
-	type.typename 
-	FROM article 
-	JOIN user ON article.uid=user.uid 
-	JOIN type ON article.tid=type.tid
+        }else{
+            echo $sql='SELECT * FROM '.$this->table.' '.$this->where.' '.$this->_limit;
+
+        }
+
+        return $this->_db->select();	
+
+            /*
+    SELECT 
+    article.aid,article.title,
+    user.username,
+    type.typename 
+    FROM article 
+    JOIN user ON article.uid=user.uid 
+    JOIN type ON article.tid=type.tid
 
 
-		*/	
+            */	
 
-	}
+    }
 
 
+    public function insert($data=''){
+        $this->create();
 
-	public function Post($data=''){
-		$this->create();
-		
-		if(empty($data)){
-			$data=$this->_data;
-		}
-		$data=filter($data);
-		foreach($data as $key=>$val){
-			$field[]=$key;
-			$value[]='"'.$val.'"';		
-		}
+        if(empty($data)){
+                $data=$this->_data;
+        }
+        $data=filter($data);
+        foreach($data as $key=>$val){
+                $field[]=$key;
+                $value[]='"'.$val.'"';		
+        }
 
-		$fields=implode(',',$field);
-		$values=implode(',',$value);
-		self::$PDO->exec('INSERT INTO '.$this->_table.' ('.$fields.')'.' VALUES('.$values.') ');
+        $fields=implode(',',$field);
+        $values=implode(',',$value);
 
-		$_pk=self::$PDO->lastInsertId();
-		//self::$PDO=null;
-		return $_pk;
 
-	}
+        return $this->_db_insert($this->table,$fields,$values);
+
+    }
 
 
 
 
-	public function Put( $data=''){
-        
+    public function update( $data=''){
 
-	    if(!isset($this->where)){
-	       echo json_encode(array('errorMsg'=>'必须设置where条件！'));
-	       return ;
-	    }
+
+        if(!isset($this->where)){
+           exit(json_encode(array('errorMsg'=>'必须设置where条件！')));
+        }   
+    
 
         foreach($data as $key=>$val){
-		   $sets[]='  '.$key.'="'.$val.'"';		   
-		}
-		 
-		$set=implode(',',$sets);
-	
-		$res= self::$PDO->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
-		//self::$PDO=null;
-		return $res;
-
+	    $sets[]='  '.$key.'="'.$val.'"';		   
 	}
+		 
+        $set=implode(',',$sets);
+
+        $res= self::$PDO->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
+        //self::$PDO=null;
+        return $res;
+    }
 	
 
 
