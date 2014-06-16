@@ -8,18 +8,11 @@ use phpful\core;
  */
 class Db{
     private static   $instance;
-    private $_pdo;
+    private $_pdo;//数据库连接
     private function __construct($args=""){ 
-        $configs=Config::getInstance()->getConfig();
-        $this->model=get_class($this);
-
-        $this->_table=isset($args[0])?$args[0]:strtolower(CONTROLLER);
-        $this->prefix=$config[MODULE]['DB']['PREFIX'];
-        $this->table=$this->prefix.$this->_table;
-        $module=$config["Common"]["MODULE"][$num];
-        $Db=$config[$module]["DB"];
-        return $Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"];    
-        $this->_pdo= new \PDO(self::$Conn[0],self::$Conn[1],self::$Conn[2],array(\PDO::ATTR_PERSISTENT => true));
+        $config=phpful\core\Config::getInstance()->getConfig(MODULE);
+        $Db=$config["DB"];         
+        $this->_pdo= new \PDO($Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"],array(\PDO::ATTR_PERSISTENT => true));
         
 		
 
@@ -34,8 +27,25 @@ class Db{
         }
         return self::$instance;
     }
-
-
+    
+    /**
+     * 获取某个数据表里面的所有字段
+     * @param string $table：完整的数据表名
+     * @return $columns or null
+     */
+    public function getColumns($table){
+        $statement=  $this->_pdo->prepare('SELECT * from '.$table." LIMIT 1");
+        $statement->execute();
+        $res=$statement->fetch(\PDO::FETCH_ASSOC);
+        if(!empty($res)){
+            foreach($res as $key=>$val){
+                 $columns[]=$key;			
+            }
+            
+            return $columns;
+        }
+        return NULL;
+    }
     public function Get(){
 		
 	

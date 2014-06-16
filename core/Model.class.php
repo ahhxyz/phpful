@@ -18,7 +18,7 @@ class Model{
     private   $_order;//order子句;
     protected $_view;//视图模型;
     protected $_rel;//关联模型;
-    public    $_fields=array();//这是一个数字数组，它的值是数据库的数据表字段;
+    public    $columns=array();//这是一个数字数组，它的值是数据库的数据表字段;
     protected $fields;//pai chu
     protected $data=array();//从表单接受过来的数据；
     protected $_data=array();//$data处理后的数据,用来插入数据库,这个数组的键名对应数据表的字段名;
@@ -27,86 +27,57 @@ class Model{
     protected $_auto=array();
     public function __construct($args=""){ 
         $this->_db=Config::getInstance();
-        /*
-        $config=\phpful\Common\C();
+        
+        $config=\phpful\core\Config::getInstance()->getConfig(MODULE);
+        
         $this->model=get_class($this);
-
         $this->_table=isset($args[0])?$args[0]:strtolower(CONTROLLER);
-        $this->prefix=$config[MODULE]['DB']['PREFIX'];
+        $this->prefix=$config['DB']['PREFIX'];
         $this->table=$this->prefix.$this->_table;
-        $this->_db=
-    if(!isset(self::$PDO)){
-            if(isset($args[1])){
-                    if(is_numeric($num)){
-                            $Conn=self::getConn($config,$args[1]);
-                    }else{
-                            $Conn=$args[1];
-                    }
-            }else{
-                    $Conn=self::getConn($config,0);
+        $this->columns=$this->_db->getColumns($this->table);	
+
+	}
+
+
+    /**
+     * 
+     * @param string $name
+     * @param type $value
+     */
+
+
+
+    public function __set($name,$value){
+            if(array_key_exists($name,$this->_fields)){
+                    $this->_data[$name]=filter($value);			
             }
-            self::$Conn=explode(",", $Conn);
-            self::$PDO= new \PDO(self::$Conn[0],self::$Conn[1],self::$Conn[2],array(\PDO::ATTR_PERSISTENT => true));
 
     }
 
-*/
-
-    $this->_fields();
-		
-
-	}
 
 
-	
+    public function __get($name){
+            if(isset($this->_data[$name])){			
+                    return $this->_data[$name];
+            }
 
-
-
-	public function __set($name,$value){
-		if(array_key_exists($name,$this->_fields)){
-		  	$this->_data[$name]=filter($value);			
-		}
-		
-	}
+    }
 
 
 
-	public function __get($name){
-		if(isset($this->_data[$name])){			
-			return $this->_data[$name];
-		}
-		
-	}
+    public function __call($name,$args){	
+            if(substr_count($name,'getBy')==1){			
+                    return $this->getBy(strtolower(substr($name,5)),$args['0']);			
+            }elseif(substr_count($name,'getFieldBy')==1){
+                return $this->getFieldBy(strtolower(substr($name,10)),$args);			
+            }
+
+
+    }
 
 
 
-	public function __call($name,$args){	
-		if(substr_count($name,'getBy')==1){			
-			return $this->getBy(strtolower(substr($name,5)),$args['0']);			
-		}elseif(substr_count($name,'getFieldBy')==1){
-		    return $this->getFieldBy(strtolower(substr($name,10)),$args);			
-		}
-		
-		
-	}
-
-
-
-	/*
-	取得当前数据的所有字段;
-	*/
-	private function _fields(){
-		    $statement=self::$PDO->prepare('select * from '.$this->table);
-		    $statement->execute();
-		    $res=$statement->fetch(\PDO::FETCH_ASSOC);
-		    if(!empty($res)){
-		        foreach($res as $key=>$val){
-			     $this->_fields[]=$key;			
-		        }
-		    }
-		
-
-	}
+    
 
 
 
