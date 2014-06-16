@@ -30,8 +30,9 @@ class Config {
             }
             return self::$instance;
     }
-/*
+/**
  * 获取配置信息，参数区分大小写
+ * @assert ("admin") == 
  */
     public function getConfig($name=""){
         if(empty($name)){
