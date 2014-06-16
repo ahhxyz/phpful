@@ -151,8 +151,8 @@ class Model{
         $fields=implode(',',$field);
         $values=implode(',',$value);
 
-
-        return $this->_db_insert($this->table,$fields,$values);
+        
+        return $this->_db_insert('INSERT INTO '.$this->table.' ('.$fields.')'.' VALUES('.$values.') ');
 
     }
 
@@ -172,10 +172,9 @@ class Model{
 	}
 		 
         $set=implode(',',$sets);
-
-        $res= self::$PDO->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
-        //self::$PDO=null;
-        return $res;
+        
+        
+        return $this->_db->insert('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
     }
 	
 
