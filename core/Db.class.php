@@ -77,11 +77,11 @@ class Db{
      * @return 最后插入的数据行的ID
      */
 
-    public function insert($table,$fiels,$values){
+    public function insert($sql){
             
 
            
-        $this->_pdo->exec('INSERT INTO '.$table.' ('.$fields.')'.' VALUES('.$values.') ');
+        $this->_pdo->exec($sql);
 
         return   $this->_pdo->lastInsertId();
         
@@ -91,23 +91,11 @@ class Db{
 
 
 
-    public function Put( $data=''){
-
-
-        if(!isset($this->where)){
-           echo json_encode(array('errorMsg'=>'必须设置where条件！'));
-           return ;
-        }
-
-    foreach($data as $key=>$val){
-               $sets[]='  '.$key.'="'.$val.'"';		   
-            }
-
-            $set=implode(',',$sets);
-
-            $res= self::$instance->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
-            //self::$instance=null;
-            return $res;
+    public function update($sql){
+        $stament=  $this->_pdo->prepare($sql);
+        $stament->excute();
+        
+        return $stament->rowCount();
 
     }
 
@@ -117,10 +105,9 @@ class Db{
 
 
 
-    public function Delete(){
-        $res=self::$instance->exec('DELETE FROM '.$this->_table.$this->where);
-            //self::$instance=null;
-            return $res;
+    public function delete($sql){
+        $res=  $this->_pdo->exec($sql);
+        return $res;
     }
 
 
