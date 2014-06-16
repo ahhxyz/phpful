@@ -1,158 +1,49 @@
 <?php
 namespace phpful\core;
-use \phpful\core;
+use phpful\core;
 
 /*
  *只针对关系型数据库，且只使用PDO
  *构造函数的参数$args是个数组，表示动态的数据库配置信息
  */
-class Model{
-    //public    $conn=array();//所有的数据库连接，即所有的PDO对象
-    private   $_db;//当前的数据库操作对象
-    public    $prefix;//数据表前缀
-    protected $model; //完整的模型类的名称，即包含模型类的包的信息
-    protected $_table;//不含前缀的数据表名称
-    protected $table;//完整的的数据表名称
-    private   $where;//where子句,使用此变量的每个方法必须先初始化在使用，因为这是成员变量而不是局部变量，下同;
-    private   $_limit;//limit子句;
-    private   $_order;//order子句;
-    protected $_view;//视图模型;
-    protected $_rel;//关联模型;
-    public    $_fields=array();//这是一个数字数组，它的值是数据库的数据表字段;
-    protected $fields;//pai chu
-    protected $data=array();//从表单接受过来的数据；
-    protected $_data=array();//$data处理后的数据,用来插入数据库,这个数组的键名对应数据表的字段名;
-    protected $_map;
-    protected $_validate;//字段验证;
-    protected $_auto=array();
-    public function __construct($args=""){ 
-        $this->_db=Config::getInstance();
-        /*
-        $config=\phpful\Common\C();
+class Db{
+    private static   $instance;
+    private $_pdo;
+    private function __construct($args=""){ 
+        $configs=Config::getInstance()->getConfig();
         $this->model=get_class($this);
 
         $this->_table=isset($args[0])?$args[0]:strtolower(CONTROLLER);
         $this->prefix=$config[MODULE]['DB']['PREFIX'];
         $this->table=$this->prefix.$this->_table;
-        $this->_db=
-    if(!isset(self::$PDO)){
-            if(isset($args[1])){
-                    if(is_numeric($num)){
-                            $Conn=self::getConn($config,$args[1]);
-                    }else{
-                            $Conn=$args[1];
-                    }
-            }else{
-                    $Conn=self::getConn($config,0);
-            }
-            self::$Conn=explode(",", $Conn);
-            self::$PDO= new \PDO(self::$Conn[0],self::$Conn[1],self::$Conn[2],array(\PDO::ATTR_PERSISTENT => true));
+        $module=$config["Common"]["MODULE"][$num];
+        $Db=$config[$module]["DB"];
+        return $Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"];    
+        $this->_pdo= new \PDO(self::$Conn[0],self::$Conn[1],self::$Conn[2],array(\PDO::ATTR_PERSISTENT => true));
+        
+		
 
     }
 
-*/
 
-    $this->_fields();
+    public static function getInstance($config,$num){
+        if(!isset(self::$instance)){
+
+            self::$instance=new Db();
+
+        }
+        return self::$instance;
+    }
+
+
+    public function Get(){
 		
-
-	}
-
-
 	
-
-
-
-	public function __set($name,$value){
-		if(array_key_exists($name,$this->_fields)){
-		  	$this->_data[$name]=filter($value);			
-		}
-		
-	}
-
-
-
-	public function __get($name){
-		if(isset($this->_data[$name])){			
-			return $this->_data[$name];
-		}
-		
-	}
-
-
-
-	public function __call($name,$args){	
-		if(substr_count($name,'getBy')==1){			
-			return $this->getBy(strtolower(substr($name,5)),$args['0']);			
-		}elseif(substr_count($name,'getFieldBy')==1){
-		    return $this->getFieldBy(strtolower(substr($name,10)),$args);			
-		}
-		
-		
-	}
-
-
-
-	/*
-	取得当前数据的所有字段;
-	*/
-	private function _fields(){
-		    $statement=self::$PDO->prepare('select * from '.$this->table);
-		    $statement->execute();
-		    $res=$statement->fetch(\PDO::FETCH_ASSOC);
-		    if(!empty($res)){
-		        foreach($res as $key=>$val){
-			     $this->_fields[]=$key;			
-		        }
-		    }
-		
-
-	}
-
-
-
-
-	public function Get(){
-		if(isset($this->_view)){
-			$tables=array_keys($this->_view);
-		    foreach($this->_view as $model=>$fields){
-			    foreach($fields as $key=>$val){
-					if($key=='_on'){
-						$val=str_replace('=', '='.$this->_prefix, $val);
-						$_joins[]=' JOIN '.$model.' ON '.$val;		
-						//$on=$val;
-					}else{
-					    $_fields[]=' '.is_int($key)?$this->_prefix.$model.$val:$this->_prefix.$model.$key.' as '.$val;
-					}				
-			    }
-		    }
-			$_fields=implode(',',$_fields);
-			$_joins =implode(' ',$_joins);
-			$sql='SELECT '.$_fields.' '.$_joins.' '.$this->where.' '.$this->_limit;
-			
-		}elseif(isset($this->_rel)){
-					foreach($this->_rel as $key=>$val){
-						$tables[]=$key;
-						foreach($val as $field=>$value){
-							$type[$key]=$field['mapping_type'];
-							$name[$key]=$field['mapping_name'];
-							$foreign_key[$key]=$field['foreign_key'];						
-						}
-						
-					}  
-
-
-				$sql='';
-			
-		}else{
-			echo $sql='SELECT * FROM '.$this->table.' '.$this->where.' '.$this->_limit;
-
-		}
-		//echo $this->where;
-		$statement=self::$PDO->prepare($sql);
-		$statement->execute();		
-		$res=$statement->fetchAll();
-		//self::$PDO=null;
-		return $res;	
+        $statement=  $this->_pdo->prepare($sql);
+        $statement->execute();		
+        $res=$statement->fetchAll();
+        //self::$instance=null;
+        return $res;	
 				
 		/*
 	SELECT 
@@ -166,11 +57,11 @@ class Model{
 
 		*/	
 
-	}
+    }
 
 
 
-	public function Post($data=''){
+	public function insert($data=''){
 		$this->create();
 		
 		if(empty($data)){
@@ -184,10 +75,10 @@ class Model{
 
 		$fields=implode(',',$field);
 		$values=implode(',',$value);
-		self::$PDO->exec('INSERT INTO '.$this->_table.' ('.$fields.')'.' VALUES('.$values.') ');
+		self::$instance->exec('INSERT INTO '.$this->_table.' ('.$fields.')'.' VALUES('.$values.') ');
 
-		$_pk=self::$PDO->lastInsertId();
-		//self::$PDO=null;
+		$_pk=self::$instance->lastInsertId();
+		//self::$instance=null;
 		return $_pk;
 
 	}
@@ -209,8 +100,8 @@ class Model{
 		 
 		$set=implode(',',$sets);
 	
-		$res= self::$PDO->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
-		//self::$PDO=null;
+		$res= self::$instance->exec('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
+		//self::$instance=null;
 		return $res;
 
 	}
@@ -222,8 +113,8 @@ class Model{
 
 
 	public function Delete(){
-	    $res=self::$PDO->exec('DELETE FROM '.$this->_table.$this->where);
-		//self::$PDO=null;
+	    $res=self::$instance->exec('DELETE FROM '.$this->_table.$this->where);
+		//self::$instance=null;
 		return $res;
 	}
 
@@ -391,18 +282,18 @@ public function create($data=''){
 
 public function getBy($field,$val){
 	$select=isset($this->fields)?$this->fields:' * ';
-	$res=self::$PDO->query('SELECT '.$select.' FROM '.$this->_table.' WHERE '.$field.'="'.$val.'"');
-	//self::$PDO=null;
+	$res=self::$instance->query('SELECT '.$select.' FROM '.$this->_table.' WHERE '.$field.'="'.$val.'"');
+	//self::$instance=null;
 	return $res;
 }
 
 
 
 public function getFieldBy($field,array $args){		
-	$statement=self::$PDO->prepare('SELECT '.$args['1'].' FROM '.$this->_table.' WHERE '.$field.'="'.$args['0'].'"');
+	$statement=self::$instance->prepare('SELECT '.$args['1'].' FROM '.$this->_table.' WHERE '.$field.'="'.$args['0'].'"');
 	$statement->execute();
 	$res=$statement->fetchColumn();
-	//self::$PDO=null;
+	//self::$instance=null;
 	return $res;
 }
 
