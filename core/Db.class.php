@@ -110,9 +110,14 @@ class Db{
         return $res;
     }
 
+    public function query($sql){
+        return $this->_pdo->query($sql);
+    }
 
-
-public function getBy($field,$val){
+    public function exec($sql){
+        return $this->_pdo->exec($sql);
+    }
+    public function getBy($field,$val){
 	$select=isset($this->fields)?$this->fields:' * ';
 	$res=self::$instance->query('SELECT '.$select.' FROM '.$this->_table.' WHERE '.$field.'="'.$val.'"');
 	//self::$instance=null;

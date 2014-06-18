@@ -36,7 +36,7 @@ class Model{
         $this->table=$this->prefix.$this->_table;
         $this->columns=$this->_db->getColumns($this->table);	
 
-	}
+    }
 
 
     /**
@@ -48,29 +48,29 @@ class Model{
 
 
     public function __set($name,$value){
-            if(array_key_exists($name,$this->_fields)){
-                    $this->_data[$name]=filter($value);			
-            }
+        if(array_key_exists($name,$this->_fields)){
+                $this->_data[$name]=filter($value);			
+        }
 
     }
 
 
 
     public function __get($name){
-            if(isset($this->_data[$name])){			
-                    return $this->_data[$name];
-            }
+        if(isset($this->_data[$name])){			
+                return $this->_data[$name];
+        }
 
     }
 
 
 
     public function __call($name,$args){	
-            if(substr_count($name,'getBy')==1){			
-                    return $this->getBy(strtolower(substr($name,5)),$args['0']);			
-            }elseif(substr_count($name,'getFieldBy')==1){
-                return $this->getFieldBy(strtolower(substr($name,10)),$args);			
-            }
+        if(substr_count($name,'getBy')==1){			
+                return $this->getBy(strtolower(substr($name,5)),$args['0']);			
+        }elseif(substr_count($name,'getFieldBy')==1){
+            return $this->getFieldBy(strtolower(substr($name,10)),$args);			
+        }
 
 
     }
@@ -174,7 +174,7 @@ class Model{
         $set=implode(',',$sets);
         
         
-        return $this->_db->insert('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
+        return $this->_db->update('UPDATE  '.$this->_table.' SET '.$set.' '.$this->where);
     }
 	
 
@@ -183,9 +183,9 @@ class Model{
 
 
 
-	public function Delete(){
-	    $res=self::$PDO->exec('DELETE FROM '.$this->_table.$this->where);
-		//self::$PDO=null;
+	public function delete(){
+	    $res=$this->_db->exec('DELETE FROM '.$this->_table.$this->where);
+		//$this->_db=null;
 		return $res;
 	}
 
@@ -353,18 +353,18 @@ public function create($data=''){
 
 public function getBy($field,$val){
 	$select=isset($this->fields)?$this->fields:' * ';
-	$res=self::$PDO->query('SELECT '.$select.' FROM '.$this->_table.' WHERE '.$field.'="'.$val.'"');
-	//self::$PDO=null;
+	$res=  $this->_db->query('SELECT '.$select.' FROM '.$this->_table.' WHERE '.$field.'="'.$val.'"');
+	//$this->_db=null;
 	return $res;
 }
 
 
 
 public function getFieldBy($field,array $args){		
-	$statement=self::$PDO->prepare('SELECT '.$args['1'].' FROM '.$this->_table.' WHERE '.$field.'="'.$args['0'].'"');
+	$statement=$this->_db->prepare('SELECT '.$args['1'].' FROM '.$this->_table.' WHERE '.$field.'="'.$args['0'].'"');
 	$statement->execute();
 	$res=$statement->fetchColumn();
-	//self::$PDO=null;
+	//$this->_db=null;
 	return $res;
 }
 

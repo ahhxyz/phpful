@@ -1,7 +1,6 @@
 <?php
 namespace phpful;
 use phpful\core\Config;
-
 /*
  *@框架入口文件
  *1.开启session
@@ -19,7 +18,7 @@ defined('APP_PATH') or die('You must define the application path !');
 define('APP_NAME',basename(APP_PATH));
 
 @ini_set('magic_quotes_runtime', 0);
-
+ini_set("display_error", 1);
 
 
 //定义常量
@@ -34,8 +33,8 @@ define('URI',$_SERVER['REQUEST_URI']);
 spl_autoload_register('phpful\autoLoad');//这个注册是全局的；
 
 //获取配置信息
-$config= Config::getIns()->getConfig();
-
+$config= Config::getInstance()->getConfig();
+//var_dump($config);
 
 //创建应用的文件夹
 $folders=array("controllers","models","views","config","modules","runtimes");
@@ -79,9 +78,10 @@ define('CONTROLLER',$controller);//真实的控制器名称和模型名称
 define('METHOD',$method);
 
 
+//var_dump($classname);
 
 
-
+//die();
 //调用对应控制器的方法
 
 if(class_exists($classname)){
