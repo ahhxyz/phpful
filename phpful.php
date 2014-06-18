@@ -1,6 +1,5 @@
 <?php
 namespace phpful;
-use phpful\core\Config;
 
 /*
  *@框架入口文件
@@ -34,7 +33,7 @@ define('URI',$_SERVER['REQUEST_URI']);
 spl_autoload_register('phpful\autoLoad');//这个注册是全局的；
 
 //获取配置信息
-$config= Config::getIns()->getConfig();
+$config= \phpful\core\Config::getInstance()->getConfig();
 
 
 //创建应用的文件夹
