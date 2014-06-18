@@ -12,7 +12,7 @@ class Db{
     private function __construct($args=""){ 
         $config=phpful\core\Config::getInstance()->getConfig(MODULE);
         $Db=$config["DB"];         
-        $this->_pdo= new \PDO($Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"],array(\PDO::ATTR_PERSISTENT => true));
+        //$this->_pdo= new \PDO($Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"],array(\PDO::ATTR_PERSISTENT => true));
         
 		
 
