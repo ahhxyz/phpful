@@ -27,8 +27,7 @@ class Model{
     protected $_validate;//字段验证;
     protected $_auto=array();
     public function __construct($args=""){ 
-        $this->_db=  Db::getInstance();
-        
+        $this->_db=  Db::getInstance();        
         $config=Config::getInstance()->getConfig(MODULE);
         
         $this->model=get_class($this);
