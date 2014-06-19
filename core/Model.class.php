@@ -138,11 +138,12 @@ class Model{
 
     public function insert($data=''){
         $this->create();
-
+        
+        
+        
         if(empty($data)){
                 $data=$this->_data;
         }
-       // $data=filter($data);
         foreach($data as $key=>$val){
                 $field[]=$key;
                 $value[]='"'.$val.'"';		
@@ -222,125 +223,123 @@ public function create($data=''){
 		return ;
 	}
     */    
-	if(!empty($data)){
-		$this->_data=$data;				
+    if(!empty($data)){
+	$this->_data=$data;				
 
-	}else{
-		$this->data=$_POST;
+    }else{
+	$this->data=$_POST;
+        
 	 //先检查是否是基本模型，如果是则进行字段映射;
-		if(isset($this->_map)){
+	if(isset($this->_map)){
 
-			//检查字段映射中的数据库字段是否正确
-			foreach($this->_map as $val){
-				if(!in_array($val,$this->columns)){
+            //检查字段映射中的数据库字段是否正确
+            foreach($this->_map as $val){
+		if(!in_array($val,$this->columns)){
 					
-					exit(json_encode(array('errorMsg'=> '字段映射错误！')));
-				}
-			}
+                    exit(json_encode(array('errorMsg'=> '字段映射错误！')));
 		}
+            }
+	}
+        //表单验证后面要定义成单独的类，使用组合模式
+        if(isset($this->_validate)){
+        //进行表单字段验证
+            foreach($this->_validate as $val){
+                switch($val['1']){
+                    case 'require':
+                        if(empty($this->data[$val['0']])){
+                                exit(json_encode(array('errorMsg'=>$val['2'])));
 
-		if(isset($this->_validate)){
-		//进行字段验证
-			foreach($this->_validate as $val){
-			    switch($val['1']){
-			        case 'require':
-			            if(empty($this->data[$val['0']])){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				            return false;
-				        }
-			        break;
+                            }
+                    break;
 
-			        case 'email':			        
-				        $reg='/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/';
-				        if(!preg_match($reg,str_replace('%40','@',$this->data[$val['0']]))){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				            return false;
-					 	}			   
-			        break;
-			        
-			        case 'number':			   
-			        break;
+                    case 'email':			        
+                        $reg='/^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/';
+                        if(!preg_match($reg,str_replace('%40','@',$this->data[$val['0']]))){
+                            exit(json_encode(array('errorMsg'=>$val['2'])));
 
+                        }			   
+                    break;
 
-			        case 'unique':
-			            $column=isset($this->_map[$val['0']])?$this->_map[$val['0']]:$val['0'];
-				        $column_val=$this->data[$val['0']];//这个字段的值;
-				        $fun='getBy'.$column;
-			            if($this->$fun($column_val)){
-				            echo json_encode(array('errorMsg'=>$val['2']));
-				        }
-					        return false;
-				    break;
-
-					case 'function':
-					    $commonFile=APP_PATH.'/'.MODULE.'/'.'/Common/common.php';
-					    if (file_exists($commonFile)) {
-					    	
-					    	require_once($commonFile);
-					    	
-					    	if(!$val['1']()){
-				            	echo json_encode(array('errorMsg'=>$val['2']));
-					        	return false;
-					        }	
-					    }
-					break;
-					
-
-					case 'callback':
-						if(!$this->$val['1']()){
-				            	echo json_encode(array('errorMsg'=>$val['2']));
-					        	return false;
-						}
-
-					break;
+                    case 'number':			   
+                    break;
 
 
-					case 'in':
-						if($val['1']<$condition2['0']&&$val['1']>$condition2['1']){
-						    $rlt[]=true;	
-						}else{
-					        return false;
-					        $this->valError[]=$val['2'];							
-						}
-					break;
+                    case 'unique':
+                        $column=isset($this->_map[$val['0']])?$this->_map[$val['0']]:$val['0'];
+                        $column_val=$this->data[$val['0']];//这个字段的值;
+                        $fun='getBy'.$column;
+                        if($this->$fun($column_val)){
+                                eixt(json_encode(array('errorMsg'=>$val['2'])));
+                        }
+                        
+                        break;
+
+                    case 'function':
+                        $commonFile=APP_PATH.'/'.MODULE.'/'.'/Common/common.php';
+                        if (file_exists($commonFile)) {
+
+                            require_once($commonFile);
+
+                            if(!$val['1']()){
+                                exit(json_encode(array('errorMsg'=>$val['2'])));
+                                    
+                            }	
+                        }
+                    break;
 
 
-					case 'confirm':
-						$to=array_key_exists($val['0'],$this->data)?$this->data[$val['0']]:$val['0'];
+                    case 'callback':
+                            if(!$this->$val['1']()){
+                                exit(json_encode(array('errorMsg'=>$val['2'])));
+                            
+                            }
 
-						if($to!=$this->data[$val['1']]){
-					        $rlt[]= false;
-					        $this->valError[]=$val['2'];
-						}else{
-						    $rlt[]=true;	
-						}
-					break;
-				}
+                    break;
 
-			}
 
-		}
+                    case 'in':
+                            if($val['1']<$condition2['0']&&$val['1']>$condition2['1']){
+                                exit(json_encode(array('errorMsg'=>$val['2'])));	
+                            }
+                    break;
+
+
+                    case 'confirm':
+                            $to=array_key_exists($val['0'],$this->data)?$this->data[$val['0']]:$val['0'];
+
+                            if($to!=$this->data[$val['1']]){
+                                exit(json_encode(array('errorMsg'=>$val['2'])));
+                            }
+                    break;
+                    }
+
+            }
+
+        }
 		
 		//根据字段映射创建数据;							
 		//$this->_data=isset($this->no_repeat)?$this->no_repeat():$this->data;
-		foreach($this->_data as $key=>$val){
+		foreach($this->data as $key=>$val){
 			if(array_key_exists($key,$this->_map)){
-				$value=$this->_data[$key];
-				$this->_data[$this->_map[$key]]=$value;
-				unset($this->_data[$key]);
+				$value=$this->data[$key];
+				$this->data[$this->_map[$key]]=$value;
+				unset($this->data[$key]);
 			}
 		}
 		
 		if(isset($this->_auto)){
 		//数据自动完成
 			foreach($this->_auto as $key=>$val){
-				$this->_data[$val['0']]=$val['1'];			   
+				$this->data[$val['0']]=$val['1'];			   
 			}	
 		}
 
 	}
-
-	$this->_data=filter($this->_data);
+        
+	$this->_data=  $this->filter($this->data);
+        if(!$this->_data){
+            exit(json_encode(array('errorMsg'=>"数据为空")));
+        }
 }
 
 
