@@ -1,6 +1,7 @@
 <?php
 namespace phpful\core;
-use \phpful\core;
+use phpful\core\Config;
+use phpful\core\Db;
 
 /*
  *只针对关系型数据库，且只使用PDO
@@ -26,9 +27,9 @@ class Model{
     protected $_validate;//字段验证;
     protected $_auto=array();
     public function __construct($args=""){ 
-        $this->_db=Config::getInstance();
+        $this->_db=  Db::getInstance();
         
-        $config=\phpful\core\Config::getInstance()->getConfig(MODULE);
+        $config=Config::getInstance()->getConfig(MODULE);
         
         $this->model=get_class($this);
         $this->_table=isset($args[0])?$args[0]:strtolower(CONTROLLER);
@@ -119,7 +120,7 @@ class Model{
 
         }
 
-        return $this->_db->select();	
+        return $this->_db->select($sql);	
 
             /*
     SELECT 
@@ -184,9 +185,8 @@ class Model{
 
 
 	public function delete(){
-	    $res=$this->_db->exec('DELETE FROM '.$this->_table.$this->where);
-		//$this->_db=null;
-		return $res;
+	    return $this->_db->exec('DELETE FROM '.$this->_table.$this->where);
+		
 	}
 
 
