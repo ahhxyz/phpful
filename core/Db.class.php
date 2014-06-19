@@ -1,6 +1,6 @@
 <?php
 namespace phpful\core;
-use phpful\core;
+use phpful\core\Config;
 
 /*
  *只针对关系型数据库，且只使用PDO
@@ -10,9 +10,10 @@ class Db{
     private static   $instance;
     private $_pdo;//数据库连接
     private function __construct($args=""){ 
-        $config=phpful\core\Config::getInstance()->getConfig(MODULE);
-        $Db=$config["DB"];         
-        $this->_pdo= new \PDO($Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"].','.$Db["USER"].",".$Db["PWD"],array(\PDO::ATTR_PERSISTENT => true));
+        $config=Config::getInstance()->getConfig(MODULE);
+        $Db=$config["DB"];  
+        
+        $this->_pdo= new \PDO($Db["TYPE"].':host='.$Db["HOST"].';dbname='.$Db["DBNAME"],$Db["USER"],$Db["PASSWORD"],array(\PDO::ATTR_PERSISTENT => true));
         
 		
 
@@ -36,12 +37,12 @@ class Db{
     public function getColumns($table){
         $statement=  $this->_pdo->prepare('SELECT * from '.$table." LIMIT 1");
         $statement->execute();
-        $res=$statement->fetch(\PDO::FETCH_ASSOC);
+        $res=$statement->fetchAll(\PDO::FETCH_ASSOC);
+        
         if(!empty($res)){
-            foreach($res as $key=>$val){
+            foreach($res[0] as $key=>$val){
                  $columns[]=$key;			
             }
-            
             return $columns;
         }
         return NULL;

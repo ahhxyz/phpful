@@ -48,7 +48,7 @@ class Model{
 
 
     public function __set($name,$value){
-        if(array_key_exists($name,$this->_fields)){
+        if(array_key_exists($name,$this->columns)){
                 $this->_data[$name]=filter($value);			
         }
 
@@ -83,7 +83,7 @@ class Model{
 
 
     public function select(){
-        if(isset($this->_view)){
+        if(isset($this->_view)){//以视图方式进行查询
                 $tables=array_keys($this->_view);
             foreach($this->_view as $model=>$fields){
                 foreach($fields as $key=>$val){
@@ -142,7 +142,7 @@ class Model{
         if(empty($data)){
                 $data=$this->_data;
         }
-        $data=filter($data);
+       // $data=filter($data);
         foreach($data as $key=>$val){
                 $field[]=$key;
                 $value[]='"'.$val.'"';		
@@ -216,24 +216,25 @@ class Model{
 
 
 public function create($data=''){
-	if($_POST['token']==$_SESSION['token']){
+    /*
+    if($_POST['token']==$_SESSION['token']){
 		echo json_encode(array('errorMsg'=> 'Token wrong'));
 		return ;
 	}
+    */    
 	if(!empty($data)){
 		$this->_data=$data;				
 
 	}else{
-		$this->data=$_POST['data'];
+		$this->data=$_POST;
 	 //先检查是否是基本模型，如果是则进行字段映射;
 		if(isset($this->_map)){
 
 			//检查字段映射中的数据库字段是否正确
 			foreach($this->_map as $val){
-				if(!array_key_exists($val,$this->_fields)){
+				if(!in_array($val,$this->columns)){
 					
-					echo json_encode(array('errorMsg'=> '字段映射错误！'));
-					return false;			
+					exit(json_encode(array('errorMsg'=> '字段映射错误！')));
 				}
 			}
 		}
